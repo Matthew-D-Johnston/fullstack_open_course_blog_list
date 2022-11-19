@@ -33,6 +33,45 @@ test('all blogs are returned', async () => {
   expect(response.body).toHaveLength(initialBlogs.length);
 });
 
+test('a blog can be updated', async () => {
+  const startingResponse = await api.get('/api/blogs');
+  const blogToUpdate = startingResponse.body[0];
+  const id = blogToUpdate._id;
+
+  const updateInfo = {
+    title: "Updated Post",
+    author: "Updated author",
+    url: "www.updatedurl.com",
+    likes: 50
+  }
+
+  const endingResponse = await api
+    .put(`/api/blogs/${id}`)
+    .send(updateInfo)
+    .expect(200)
+    .expect('Content-Type', /application\/json/);
+  
+  const updatedBlog = endingResponse.body;
+  expect(updatedBlog.title).toBe(updateInfo.title);
+});
+
+test('a blog can be deleted', async () => {
+  const startingResponse = await api.get('/api/blogs');
+  const blogsAtStart = startingResponse.body;
+  const blogToDelete = blogsAtStart[0];
+
+  await api
+    .delete(`/api/blogs/${blogToDelete._id}`)
+    .expect(204);
+  
+  const endingResponse = await api.get('/api/blogs');
+  const blogsAtEnd = endingResponse.body;
+  expect(blogsAtEnd).toHaveLength(initialBlogs.length - 1);
+
+  const titles = blogsAtEnd.map(blog => blog.title);
+  expect(titles).not.toContain(blogToDelete.title);
+});
+
 test('a valid blog can be added', async () => {
   const newBlog = {
     title: "Beautiful Butterflies",
